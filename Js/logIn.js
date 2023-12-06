@@ -90,6 +90,3 @@ function addToCard(id){
         }
     });
 }
-function finishSale(){
-    window.location.href='index.php';
-}

@@ -12,7 +12,7 @@ $isLoggedIn = isset($_SESSION['username']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlipArt</title>
-    <script src="/Js/logIn.js"></script>
+
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/flatly/bootstrap.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap">
@@ -102,8 +102,6 @@ $isLoggedIn = isset($_SESSION['username']);
     </div>
 </div>
 
-
-
 <div class="modal fade" id="cartModal" tabindex="-1" role="dialog" aria-labelledby="cartModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -114,33 +112,51 @@ $isLoggedIn = isset($_SESSION['username']);
                 </button>
             </div>
             <?php
+
             if($isLoggedIn){
                 $con = conecta();
                 $usuario = $_SESSION['username'];
                 $sql = "SELECT * FROM pedidos WHERE status = 1 AND client_id = '$usuario'";
                 $res = $con->query($sql);
+
                 $total = 0;
-                while($row = $res->fetch_array()) {
-                    $userOrderId = $row["id"];
-                    $productoQuery = "SELECT * FROM items_orders WHERE order_id = '$userOrderId'";
-                    $productoANS = $con->query($productoQuery);
-                    while($productrow = $productoANS->fetch_array()) {
-                        $invoiceNumber = $productrow['id'];
-                        $productID = $productrow['product_id'];
-                        $productAmount = $productrow['amount'];
-                        $productPrice = $productrow['price'];
-                        //Obten Detalles del Producto
-                        $tablaDeProductos = "SELECT * FROM Products WHERE id = '$productID' AND deleted = 0";
-                        $tablaDeProductosANS = $con->query($tablaDeProductos);
-                        while($tablaDeProductosROW = $tablaDeProductosANS->fetch_array()) {
-                            $itemName = $tablaDeProductosROW['product_name'];
-                            $itemCode = $tablaDeProductosROW['product_code'];
-                            $itemDescr = $tablaDeProductosROW['product_description'];
-                            $itemStock = $tablaDeProductosROW['product_stock'];
-                            $file = $tablaDeProductosROW["archivo"];
-                            $finalFile = substr($file, 3);
-                            $total += ($productPrice * $productAmount);
-                            echo '
+                $numFilas=$res->num_rows;
+                if ($numFilas=='0'){
+                    echo'
+                               <div class="modal-body">
+                <div class="media">
+                    <div class="media-body">
+                        <h5 class="mt-0">Acualmente no tienes productos en el carrito</h5>
+                        <div id="productDescription">Empieza a agregar productos aqui <strong>HOY MISMO</strong>!</div>
+                    </div>
+                </div>
+                <hr>
+            </div>
+                    ';
+                }else{
+
+
+                    while($row = $res->fetch_array()) {
+                        $userOrderId = $row["id"];
+                        $productoQuery = "SELECT * FROM items_orders WHERE order_id = '$userOrderId'";
+                        $productoANS = $con->query($productoQuery);
+                        while($productrow = $productoANS->fetch_array()) {
+                            $invoiceNumber = $productrow['id'];
+                            $productID = $productrow['product_id'];
+                            $productAmount = $productrow['amount'];
+                            $productPrice = $productrow['price'];
+                            //Obten Detalles del Producto
+                            $tablaDeProductos = "SELECT * FROM Products WHERE id = '$productID' AND deleted = 0";
+                            $tablaDeProductosANS = $con->query($tablaDeProductos);
+                            while($tablaDeProductosROW = $tablaDeProductosANS->fetch_array()) {
+                                $itemName = $tablaDeProductosROW['product_name'];
+                                $itemCode = $tablaDeProductosROW['product_code'];
+                                $itemDescr = $tablaDeProductosROW['product_description'];
+                                $itemStock = $tablaDeProductosROW['product_stock'];
+                                $file = $tablaDeProductosROW["archivo"];
+                                $finalFile = substr($file, 3);
+                                $total += ($productPrice * $productAmount);
+                                echo '
                 <div class="modal-body">
                     <div class="media">
                         <img src="';echo $finalFile; echo '" style="max-width: 64px;height: 64px;object-fit: cover;" class="mr-3" alt="Producto">
@@ -150,18 +166,20 @@ $isLoggedIn = isset($_SESSION['username']);
                             <div id="productPrice"><strong>Precio:</strong> $';echo $productPrice;echo '.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="subtractQuantity">-</button>
                                 </div>
-                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '" id="quantity" readonly>
+                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '  " id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
+                             <label for="botoneliminar" style="cursor: grab">Eliminar producto</label>
+                                <button id="botoneliminar" class="botoneliminar"  style="display: none ; " onclick="deleteThisproduct(';echo $userOrderId;echo '   )"></button>
                         </div>
                     </div>
                     <hr>
                 </div>
-                ';}}}}
+                ';}}}} }
             else{
                 echo '
                 <div class="modal-body">
@@ -172,11 +190,11 @@ $isLoggedIn = isset($_SESSION['username']);
                             <div id="productPrice"><strong>Precio:</strong> $00.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary subtractQuantity"  type="button" id="subtractQuantity">-</button>
                                 </div>
                                 <input type="text" class="form-control text-center" value="0" id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary addQuantity" type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
                         </div>
@@ -191,14 +209,86 @@ $isLoggedIn = isset($_SESSION['username']);
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary">Realizar Compra</button>
+                <button type="button" class="btn btn-primary" onclick="sale();return false">Realizar Compra</button>
             </div>
         </div>
     </div>
 </div>
 
 
+<footer class="bg-dark text-white text-center py-3">
+    <div class="container">
+        <p>&copy; 2023 FlipArt Todos los derechos reservados.</p>
+    </div>
+</footer>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="Js/carrito.js"></script>
+<script src="Js/logIn.js"></script>
+<script>
+    function sale(){
+
+        if(<?php echo  $numFilas?> != 0){
+            window.location.href='pago.php';
+        }
+
+
+    }
+    $(document).ready(function() {
+
+        $("#addQuantity").click(function() {
+            var currentQuantity = parseInt($("#quantity").val());
+            $("#quantity").val(currentQuantity + 1);
+        });
+
+
+        $("#subtractQuantity").click(function() {
+            var currentQuantity = parseInt($("#quantity").val());
+            if (currentQuantity > 1) {
+                $("#quantity").val(currentQuantity - 1);
+            }
+        });
+    });
+    function changeInfo() {
+        var name = $('#fullname').val();
+        var email = $('#email').val();
+        var phone = $('#phone').val();
+        if (name == '' || email == "" || phone == "") {
+            $('#emailWrong').show();
+            $('#emailWrong').html('Faltan Campos por llenar.');
+            setTimeout("$('#emailWrong').hide(); $('#emailWrong').html('')", 5000);
+        } else {
+            $.ajax({
+                url: "UpdateInfo.php",
+                type: "POST",
+                data: 'name=' + name + '&email=' + email + "&phone=" + phone,
+                success: function (res) {
+                    location.reload();
+                },
+                error: function () {
+                    alert('Archivo no encontrado.');
+                }
+            });
+
+        }
+    }
+    function deleteThisproduct(order){
+        $.ajax({
+            url:"deleteProductCar.php",
+            type:"POST",
+            data:'order='+order,
+            success:function (res){
+                console.log(res);
+                location.reload();
+            },
+            error:function (){
+                alert('Archivo no encontrado.');
+            }
+        });
+    }
+</script>
 </body>
 
 </html>

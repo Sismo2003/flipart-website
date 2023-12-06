@@ -3,8 +3,20 @@ require 'BackEnd/conecta.php';
 session_start();
 
 
-$isLoggedIn = isset($_SESSION['username']);
 
+$isLoggedIn = isset($_SESSION['username']);
+if($isLoggedIn){
+    $con = conecta();
+    $usuario = $_SESSION['username'];
+    $sql = "SELECT * FROM pedidos WHERE status = 1 AND client_id = '$usuario'";
+    $res = $con->query($sql);
+    $numFilas = 0;
+    $total = 0;
+    $numFilas=$res->num_rows;
+}else{
+    $numFilas = 0;
+    $total = 0;
+}
 
 if ($isLoggedIn && isset($_POST['logout'])) {
     session_destroy();
@@ -100,20 +112,21 @@ if ($isLoggedIn && isset($_POST['logout'])) {
         Teléfono: 3333333333<br>
         Email: <a href="mailto:board.gg@gmail.com">FlipART@arteurbano.com</a>
     </p>
-    <form>
+    <form name="sendHelp" method="post">
         <div class="form-group">
             <label for="nombre">Nombre:</label>
-            <input type="text" class="form-control" id="nombre" placeholder="Ingresa tu nombre">
+            <input type="text" class="form-control" id="nombre" name="userNameContact" placeholder="Ingresa tu nombre">
         </div>
         <div class="form-group">
             <label for="email">Email:</label>
-            <input type="email" class="form-control" id="email" placeholder="Ingresa tu correo electrónico">
+            <input type="email" class="form-control" id="email" name="userEmailContact" placeholder="Ingresa tu correo electrónico">
         </div>
         <div class="form-group">
             <label for="mensaje">Mensaje:</label>
-            <textarea class="form-control" id="mensaje" rows="4" placeholder="Escribe tu mensaje"></textarea>
+            <textarea class="form-control" id="mensaje" rows="4" name="userMsgContact" placeholder="Escribe tu mensaje"></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Enviar</button>
+        <div class="alert alert-dismissible alert-danger emailWrong" id="emailWrong" style="display: none"></div>
+        <button type="submit" onclick="help();return false;" class="btn btn-primary">Enviar</button>
     </form>
 </div>
 
@@ -184,13 +197,15 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                             <div id="productPrice"><strong>Precio:</strong> $';echo $productPrice;echo '.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="subtractQuantity">-</button>
                                 </div>
-                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '" id="quantity" readonly>
+                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '  " id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
+                             <label for="botoneliminar" style="cursor: grab">Eliminar producto</label>
+                                <button id="botoneliminar" class="botoneliminar"  style="display: none ; " onclick="deleteThisproduct(';echo $userOrderId;echo '   )"></button>
                         </div>
                     </div>
                     <hr>
@@ -206,11 +221,11 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                             <div id="productPrice"><strong>Precio:</strong> $00.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary subtractQuantity"  type="button" id="subtractQuantity">-</button>
                                 </div>
                                 <input type="text" class="form-control text-center" value="0" id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary addQuantity" type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
                         </div>
@@ -244,13 +259,82 @@ if ($isLoggedIn && isset($_POST['logout'])) {
 <script src="Js/carrito.js"></script>
 <script src="Js/logIn.js"></script>
 <script>
-    function sale(){
 
+
+    }
+    $(document).ready(function() {
+
+        $("#addQuantity").click(function() {
+            var currentQuantity = parseInt($("#quantity").val());
+            $("#quantity").val(currentQuantity + 1);
+        });
+
+
+        $("#subtractQuantity").click(function() {
+            var currentQuantity = parseInt($("#quantity").val());
+            if (currentQuantity > 1) {
+                $("#quantity").val(currentQuantity - 1);
+            }
+        });
+    });
+    function changeInfo() {
+        var name = $('#fullname').val();
+        var email = $('#email').val();
+        var phone = $('#phone').val();
+        if (name == '' || email == "" || phone == "") {
+            $('#emailWrong').show();
+            $('#emailWrong').html('Faltan Campos por llenar.');
+            setTimeout("$('#emailWrong').hide(); $('#emailWrong').html('')", 5000);
+        } else {
+            $.ajax({
+                url: "UpdateInfo.php",
+                type: "POST",
+                data: 'name=' + name + '&email=' + email + "&phone=" + phone,
+                success: function (res) {
+                    location.reload();
+                },
+                error: function () {
+                    alert('Archivo no encontrado.');
+                }
+            });
+
+        }
+    }
+    function deleteThisproduct(order){
+        $.ajax({
+            url:"deleteProductCar.php",
+            type:"POST",
+            data:'order='+order,
+            success:function (res){
+                console.log(res);
+                location.reload();
+            },
+            error:function (){
+                alert('Archivo no encontrado.');
+            }
+        });
+    }
+</script>
+<script>
+    function sale(){
         if(<?php echo  $numFilas?> != 0){
             window.location.href='pago.php';
         }
+    }
+    function help(){
 
-
+        var username= $("#nombre").val();
+        var email= $("#email").val();
+        var msj = $("#mensaje").val();
+        if(msj == '' || email == '' || username == ''){
+            $('#emailWrong').show();
+            $('#emailWrong').html('Faltan Campos por llenar.');
+            setTimeout("$('#emailWrong').hide(); $('#emailWrong').html('')",5000);
+        }else{
+            document.sendHelp.method = "POST";
+            document.sendHelp.action = "emailSender.php";
+            document.sendHelp.submit() ;
+        }
     }
 
 </script>

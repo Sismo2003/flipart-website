@@ -1,22 +1,28 @@
 <?php
-require "BackEnd/conecta.php";
-$con = conecta();
+require 'BackEnd/conecta.php';
 session_start();
 
 
-$isLoggedIn = isset($_SESSION['username']);
 
+$isLoggedIn = isset($_SESSION['username']);
+if($isLoggedIn){
+    $con = conecta();
+    $usuario = $_SESSION['username'];
+    $sql = "SELECT * FROM pedidos WHERE status = 1 AND client_id = '$usuario'";
+    $res = $con->query($sql);
+    $numFilas = 0;
+    $total = 0;
+    $numFilas=$res->num_rows;
+}else{
+    $numFilas = 0;
+    $total = 0;
+}
 
 if ($isLoggedIn && isset($_POST['logout'])) {
-
-    $_SESSION = array();
-
-
     session_destroy();
-
-
     header('Location: index.php');
     exit();
+
 }
 ?>
 
@@ -133,6 +139,65 @@ if ($isLoggedIn && isset($_POST['logout'])) {
 
 
 
+    <div class="container my-5">
+        <h1>Productos en PROMOCION</h1>
+        <br>
+        <p>Envios gratis a todo mexico!</p>
+        <div class="row">
+
+            <?php
+            $con = conecta();
+
+
+            $sql = "SELECT * FROM Offers
+                                    WHERE status = 1 AND deleted = 0";
+            $res = $con->query($sql);
+            while ($row = $res->fetch_array()) {
+                $id = $row["id"];
+                $productName = $row["product_name"];
+                $productCode = $row["product_code"];
+                $productDescription = $row["product_description"];
+                $productCost = $row["product_cost"];
+                $productStock = $row["product_stock"];
+                $file = $row["archivo"];
+                $finalFile = substr($file, 3);
+
+                ?>
+                <div class="card" style="width: 18rem; margin: 1%"  >
+                    <img class="card-img-top" src="<?php echo $finalFile?>" alt="Card image cap">
+                    <div class="card-body">
+                        <h5 class="card-title"><?php echo $productName ?></h5>
+                        <p class="card-text"><?php echo $productDescription?></p>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Precio:</strong> $<?php echo $productCost?>.00</li>
+                        <li class="list-group-item"> <strong>Disponibilidad:</strong>  <?php echo $productStock?></li>
+                        <li class="list-group-item"> <strong>Codigo:</strong>  <?php echo $productCode?></li>
+                    </ul>
+                    <div class="card-body">
+                        <label for="botonespia_<?php echo $id; ?>" class="labelfor"><a  class="card-link">Agregar al Carrito!</a></label>
+                        <button onclick="addToCard('<?php echo $id; ?>')" class="hidebotton" id="botonespia_<?php echo $id; ?>"></button>
+                        <div class="form-group">
+
+                            <select class="form-control" id="cantidad_<?php echo $id; ?>">
+                                <?php for($i = 1 ; $i <= $productStock ; $i++){ ?>
+                                    <option><?php echo $i;?> Unidad</option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            <?php }?>
+
+
+        </div>
+    </div>
+
+
+
+
+
     <div class="modal fade" id="cartModal" tabindex="-1" role="dialog" aria-labelledby="cartModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -197,13 +262,15 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                             <div id="productPrice"><strong>Precio:</strong> $';echo $productPrice;echo '.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="subtractQuantity">-</button>
                                 </div>
-                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '" id="quantity" readonly>
+                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '  " id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
+                             <label for="botoneliminar" style="cursor: grab">Eliminar producto</label>
+                                <button id="botoneliminar" class="botoneliminar"  style="display: none ; " onclick="deleteThisproduct(';echo $userOrderId;echo '   )"></button>
                         </div>
                     </div>
                     <hr>
@@ -219,11 +286,11 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                             <div id="productPrice"><strong>Precio:</strong> $00.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary subtractQuantity"  type="button" id="subtractQuantity">-</button>
                                 </div>
                                 <input type="text" class="form-control text-center" value="0" id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary addQuantity" type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
                         </div>
@@ -265,7 +332,58 @@ if ($isLoggedIn && isset($_POST['logout'])) {
 
 
         }
+        $(document).ready(function() {
 
+            $("#addQuantity").click(function() {
+                var currentQuantity = parseInt($("#quantity").val());
+                $("#quantity").val(currentQuantity + 1);
+            });
+
+
+            $("#subtractQuantity").click(function() {
+                var currentQuantity = parseInt($("#quantity").val());
+                if (currentQuantity > 1) {
+                    $("#quantity").val(currentQuantity - 1);
+                }
+            });
+        });
+        function changeInfo() {
+            var name = $('#fullname').val();
+            var email = $('#email').val();
+            var phone = $('#phone').val();
+            if (name == '' || email == "" || phone == "") {
+                $('#emailWrong').show();
+                $('#emailWrong').html('Faltan Campos por llenar.');
+                setTimeout("$('#emailWrong').hide(); $('#emailWrong').html('')", 5000);
+            } else {
+                $.ajax({
+                    url: "UpdateInfo.php",
+                    type: "POST",
+                    data: 'name=' + name + '&email=' + email + "&phone=" + phone,
+                    success: function (res) {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert('Archivo no encontrado.');
+                    }
+                });
+
+            }
+        }
+        function deleteThisproduct(order){
+            $.ajax({
+                url:"deleteProductCar.php",
+                type:"POST",
+                data:'order='+order,
+                success:function (res){
+                    console.log(res);
+                    location.reload();
+                },
+                error:function (){
+                    alert('Archivo no encontrado.');
+                }
+            });
+        }
     </script>
     </body>
 </html>

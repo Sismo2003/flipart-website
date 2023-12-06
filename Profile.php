@@ -14,7 +14,6 @@
 
 
     if ($isLoggedIn && isset($_POST['logout'])) {
-        $_SESSION = array();
         session_destroy();
         header('Location: index.php');
         exit();
@@ -127,16 +126,15 @@ $birthday = $row['birthday'];
                     <label for="phone">Teléfono:</label>
                     <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo $phoneNumber; ?>" >
                 </div>
+                <div class="alert alert-dismissible alert-danger emailWrong" id="emailWrong" style="display: none"></div>
 
-
-                <button type="submit" name="edit_profile" class="btn btn-primary">Editar Perfil</button>
+                <button type="submit" name="edit_profile" onclick="changeInfo();return false;" class="btn btn-primary">Editar Perfil</button>
             </form>
         </div>
     </div>
 </div>
 
 <?php }?>
-
 <div class="modal fade" id="cartModal" tabindex="-1" role="dialog" aria-labelledby="cartModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -201,13 +199,15 @@ $birthday = $row['birthday'];
                             <div id="productPrice"><strong>Precio:</strong> $';echo $productPrice;echo '.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="subtractQuantity">-</button>
                                 </div>
-                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '" id="quantity" readonly>
+                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '  " id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
+                             <label for="botoneliminar" style="cursor: grab">Eliminar producto</label>
+                                <button id="botoneliminar" class="botoneliminar"  style="display: none ; " onclick="deleteThisproduct(';echo $userOrderId;echo '   )"></button>
                         </div>
                     </div>
                     <hr>
@@ -223,11 +223,11 @@ $birthday = $row['birthday'];
                             <div id="productPrice"><strong>Precio:</strong> $00.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary subtractQuantity"  type="button" id="subtractQuantity">-</button>
                                 </div>
                                 <input type="text" class="form-control text-center" value="0" id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary addQuantity" type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
                         </div>
@@ -269,7 +269,58 @@ $birthday = $row['birthday'];
 
 
     }
+    $(document).ready(function() {
 
+        $("#addQuantity").click(function() {
+            var currentQuantity = parseInt($("#quantity").val());
+            $("#quantity").val(currentQuantity + 1);
+        });
+
+
+        $("#subtractQuantity").click(function() {
+            var currentQuantity = parseInt($("#quantity").val());
+            if (currentQuantity > 1) {
+                $("#quantity").val(currentQuantity - 1);
+            }
+        });
+    });
+    function changeInfo() {
+        var name = $('#fullname').val();
+        var email = $('#email').val();
+        var phone = $('#phone').val();
+        if (name == '' || email == "" || phone == "") {
+            $('#emailWrong').show();
+            $('#emailWrong').html('Faltan Campos por llenar.');
+            setTimeout("$('#emailWrong').hide(); $('#emailWrong').html('')", 5000);
+        } else {
+            $.ajax({
+                url: "UpdateInfo.php",
+                type: "POST",
+                data: 'name=' + name + '&email=' + email + "&phone=" + phone,
+                success: function (res) {
+                    location.reload();
+                },
+                error: function () {
+                    alert('Archivo no encontrado.');
+                }
+            });
+
+        }
+    }
+    function deleteThisproduct(order){
+        $.ajax({
+            url:"deleteProductCar.php",
+            type:"POST",
+            data:'order='+order,
+            success:function (res){
+                console.log(res);
+                location.reload();
+            },
+            error:function (){
+                alert('Archivo no encontrado.');
+            }
+        });
+    }
 </script>
 </body>
 

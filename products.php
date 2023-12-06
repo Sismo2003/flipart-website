@@ -1,20 +1,26 @@
 
 <?php
+require 'BackEnd/conecta.php';
 session_start();
-require "BackEnd/conecta.php";
+
 
 
 $isLoggedIn = isset($_SESSION['username']);
-
+if($isLoggedIn){
+    $con = conecta();
+    $usuario = $_SESSION['username'];
+    $sql = "SELECT * FROM pedidos WHERE status = 1 AND client_id = '$usuario'";
+    $res = $con->query($sql);
+    $numFilas = 0;
+    $total = 0;
+    $numFilas=$res->num_rows;
+}else{
+    $numFilas = 0;
+    $total = 0;
+}
 
 if ($isLoggedIn && isset($_POST['logout'])) {
-
-    $_SESSION = array();
-
-
     session_destroy();
-
-
     header('Location: index.php');
     exit();
 }
@@ -104,9 +110,7 @@ if ($isLoggedIn && isset($_POST['logout'])) {
 
             <?php
             $con = conecta();
-            $sql = "SELECT * FROM pedidos WHERE status = 1 AND client_id = '$usuario'";
-            $res = $con->query($sql);
-            echo $res->num_rows;
+
 
             $sql = "SELECT * FROM Products
                                     WHERE status = 1 AND deleted = 0";
@@ -174,7 +178,7 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                     $total = 0;
                     $numFilas=$res->num_rows;
                     if ($numFilas=='0'){
-                    echo'
+                        echo'
                                <div class="modal-body">
                 <div class="media">
                     <div class="media-body">
@@ -185,30 +189,30 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                 <hr>
             </div>
                     ';
-                }else{
+                    }else{
 
 
-                    while($row = $res->fetch_array()) {
-                        $userOrderId = $row["id"];
-                        $productoQuery = "SELECT * FROM items_orders WHERE order_id = '$userOrderId'";
-                        $productoANS = $con->query($productoQuery);
-                        while($productrow = $productoANS->fetch_array()) {
-                            $invoiceNumber = $productrow['id'];
-                            $productID = $productrow['product_id'];
-                            $productAmount = $productrow['amount'];
-                            $productPrice = $productrow['price'];
-                            //Obten Detalles del Producto
-                            $tablaDeProductos = "SELECT * FROM Products WHERE id = '$productID' AND deleted = 0";
-                            $tablaDeProductosANS = $con->query($tablaDeProductos);
-                            while($tablaDeProductosROW = $tablaDeProductosANS->fetch_array()) {
-                                $itemName = $tablaDeProductosROW['product_name'];
-                                $itemCode = $tablaDeProductosROW['product_code'];
-                                $itemDescr = $tablaDeProductosROW['product_description'];
-                                $itemStock = $tablaDeProductosROW['product_stock'];
-                                $file = $tablaDeProductosROW["archivo"];
-                                $finalFile = substr($file, 3);
-                                $total += ($productPrice * $productAmount);
-                                echo '
+                        while($row = $res->fetch_array()) {
+                            $userOrderId = $row["id"];
+                            $productoQuery = "SELECT * FROM items_orders WHERE order_id = '$userOrderId'";
+                            $productoANS = $con->query($productoQuery);
+                            while($productrow = $productoANS->fetch_array()) {
+                                $invoiceNumber = $productrow['id'];
+                                $productID = $productrow['product_id'];
+                                $productAmount = $productrow['amount'];
+                                $productPrice = $productrow['price'];
+                                //Obten Detalles del Producto
+                                $tablaDeProductos = "SELECT * FROM Products WHERE id = '$productID' AND deleted = 0";
+                                $tablaDeProductosANS = $con->query($tablaDeProductos);
+                                while($tablaDeProductosROW = $tablaDeProductosANS->fetch_array()) {
+                                    $itemName = $tablaDeProductosROW['product_name'];
+                                    $itemCode = $tablaDeProductosROW['product_code'];
+                                    $itemDescr = $tablaDeProductosROW['product_description'];
+                                    $itemStock = $tablaDeProductosROW['product_stock'];
+                                    $file = $tablaDeProductosROW["archivo"];
+                                    $finalFile = substr($file, 3);
+                                    $total += ($productPrice * $productAmount);
+                                    echo '
                 <div class="modal-body">
                     <div class="media">
                         <img src="';echo $finalFile; echo '" style="max-width: 64px;height: 64px;object-fit: cover;" class="mr-3" alt="Producto">
@@ -218,13 +222,15 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                             <div id="productPrice"><strong>Precio:</strong> $';echo $productPrice;echo '.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="subtractQuantity">-</button>
                                 </div>
-                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '" id="quantity" readonly>
+                                <input type="text" class="form-control text-center" value=" ';echo $productAmount;echo '  " id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary " type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
+                             <label for="botoneliminar" style="cursor: grab">Eliminar producto</label>
+                                <button id="botoneliminar" class="botoneliminar"  style="display: none ; " onclick="deleteThisproduct(';echo $userOrderId;echo '   )"></button>
                         </div>
                     </div>
                     <hr>
@@ -240,11 +246,11 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                             <div id="productPrice"><strong>Precio:</strong> $00.00 Unidad</div>
                             <div class="input-group mt-3">
                                 <div class="input-group-prepend">
-                                    <button class="btn btn-outline-secondary" type="button" id="subtractQuantity">-</button>
+                                    <button class="btn btn-outline-secondary subtractQuantity"  type="button" id="subtractQuantity">-</button>
                                 </div>
                                 <input type="text" class="form-control text-center" value="0" id="quantity" readonly>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="addQuantity">+</button>
+                                    <button class="btn btn-outline-secondary addQuantity" type="button" id="addQuantity">+</button>
                                 </div>
                             </div>
                         </div>
@@ -286,7 +292,58 @@ if ($isLoggedIn && isset($_POST['logout'])) {
 
 
         }
+        $(document).ready(function() {
 
+            $("#addQuantity").click(function() {
+                var currentQuantity = parseInt($("#quantity").val());
+                $("#quantity").val(currentQuantity + 1);
+            });
+
+
+            $("#subtractQuantity").click(function() {
+                var currentQuantity = parseInt($("#quantity").val());
+                if (currentQuantity > 1) {
+                    $("#quantity").val(currentQuantity - 1);
+                }
+            });
+        });
+        function changeInfo() {
+            var name = $('#fullname').val();
+            var email = $('#email').val();
+            var phone = $('#phone').val();
+            if (name == '' || email == "" || phone == "") {
+                $('#emailWrong').show();
+                $('#emailWrong').html('Faltan Campos por llenar.');
+                setTimeout("$('#emailWrong').hide(); $('#emailWrong').html('')", 5000);
+            } else {
+                $.ajax({
+                    url: "UpdateInfo.php",
+                    type: "POST",
+                    data: 'name=' + name + '&email=' + email + "&phone=" + phone,
+                    success: function (res) {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert('Archivo no encontrado.');
+                    }
+                });
+
+            }
+        }
+        function deleteThisproduct(order){
+            $.ajax({
+                url:"deleteProductCar.php",
+                type:"POST",
+                data:'order='+order,
+                success:function (res){
+                    console.log(res);
+                    location.reload();
+                },
+                error:function (){
+                    alert('Archivo no encontrado.');
+                }
+            });
+        }
     </script>
     </body>
 
