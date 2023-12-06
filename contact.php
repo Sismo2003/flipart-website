@@ -7,13 +7,7 @@ $isLoggedIn = isset($_SESSION['username']);
 
 
 if ($isLoggedIn && isset($_POST['logout'])) {
-
-    $_SESSION = array();
-
-
     session_destroy();
-
-
     header('Location: index.php');
     exit();
 }
@@ -38,6 +32,7 @@ if ($isLoggedIn && isset($_POST['logout'])) {
 
 
 <body>
+
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <a class="navbar-brand" href="index.php">FlipART</a>
@@ -96,6 +91,7 @@ if ($isLoggedIn && isset($_POST['logout'])) {
 
 
 
+
 <div class="container mt-5">
     <h1>Contactanos</h1>
     <p>¿Tienes alguna pregunta o sugerencia sobre FlipART? ¡Déjanos saber! Estamos aquí para ayudarte.</p>
@@ -120,18 +116,7 @@ if ($isLoggedIn && isset($_POST['logout'])) {
         <button type="submit" class="btn btn-primary">Enviar</button>
     </form>
 </div>
-<div class="modal fade" id="cartModal" tabindex="-1" role="dialog" aria-labelledby="cartModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="cartModalLabel">Carrito de Compras</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 
 
@@ -145,33 +130,51 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                 </button>
             </div>
             <?php
+
             if($isLoggedIn){
                 $con = conecta();
                 $usuario = $_SESSION['username'];
                 $sql = "SELECT * FROM pedidos WHERE status = 1 AND client_id = '$usuario'";
                 $res = $con->query($sql);
+
                 $total = 0;
-                while($row = $res->fetch_array()) {
-                    $userOrderId = $row["id"];
-                    $productoQuery = "SELECT * FROM items_orders WHERE order_id = '$userOrderId'";
-                    $productoANS = $con->query($productoQuery);
-                    while($productrow = $productoANS->fetch_array()) {
-                        $invoiceNumber = $productrow['id'];
-                        $productID = $productrow['product_id'];
-                        $productAmount = $productrow['amount'];
-                        $productPrice = $productrow['price'];
-                        //Obten Detalles del Producto
-                        $tablaDeProductos = "SELECT * FROM Products WHERE id = '$productID' AND deleted = 0";
-                        $tablaDeProductosANS = $con->query($tablaDeProductos);
-                        while($tablaDeProductosROW = $tablaDeProductosANS->fetch_array()) {
-                            $itemName = $tablaDeProductosROW['product_name'];
-                            $itemCode = $tablaDeProductosROW['product_code'];
-                            $itemDescr = $tablaDeProductosROW['product_description'];
-                            $itemStock = $tablaDeProductosROW['product_stock'];
-                            $file = $tablaDeProductosROW["archivo"];
-                            $finalFile = substr($file, 3);
-                            $total += ($productPrice * $productAmount);
-                            echo '
+                $numFilas=$res->num_rows;
+                if ($numFilas=='0'){
+                    echo'
+                               <div class="modal-body">
+                <div class="media">
+                    <div class="media-body">
+                        <h5 class="mt-0">Acualmente no tienes productos en el carrito</h5>
+                        <div id="productDescription">Empieza a agregar productos aqui <strong>HOY MISMO</strong>!</div>
+                    </div>
+                </div>
+                <hr>
+            </div>
+                    ';
+                }else{
+
+
+                    while($row = $res->fetch_array()) {
+                        $userOrderId = $row["id"];
+                        $productoQuery = "SELECT * FROM items_orders WHERE order_id = '$userOrderId'";
+                        $productoANS = $con->query($productoQuery);
+                        while($productrow = $productoANS->fetch_array()) {
+                            $invoiceNumber = $productrow['id'];
+                            $productID = $productrow['product_id'];
+                            $productAmount = $productrow['amount'];
+                            $productPrice = $productrow['price'];
+                            //Obten Detalles del Producto
+                            $tablaDeProductos = "SELECT * FROM Products WHERE id = '$productID' AND deleted = 0";
+                            $tablaDeProductosANS = $con->query($tablaDeProductos);
+                            while($tablaDeProductosROW = $tablaDeProductosANS->fetch_array()) {
+                                $itemName = $tablaDeProductosROW['product_name'];
+                                $itemCode = $tablaDeProductosROW['product_code'];
+                                $itemDescr = $tablaDeProductosROW['product_description'];
+                                $itemStock = $tablaDeProductosROW['product_stock'];
+                                $file = $tablaDeProductosROW["archivo"];
+                                $finalFile = substr($file, 3);
+                                $total += ($productPrice * $productAmount);
+                                echo '
                 <div class="modal-body">
                     <div class="media">
                         <img src="';echo $finalFile; echo '" style="max-width: 64px;height: 64px;object-fit: cover;" class="mr-3" alt="Producto">
@@ -192,7 +195,7 @@ if ($isLoggedIn && isset($_POST['logout'])) {
                     </div>
                     <hr>
                 </div>
-                ';}}}}
+                ';}}}} }
             else{
                 echo '
                 <div class="modal-body">
@@ -222,14 +225,11 @@ if ($isLoggedIn && isset($_POST['logout'])) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary">Realizar Compra</button>
+                <button type="button" class="btn btn-primary" onclick="sale();return false">Realizar Compra</button>
             </div>
         </div>
     </div>
 </div>
-
-
-<br>
 
 
 <footer class="bg-dark text-white text-center py-3">
@@ -238,15 +238,25 @@ if ($isLoggedIn && isset($_POST['logout'])) {
     </div>
 </footer>
 
-
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script src="Js/carrito.js"></script>
 <script src="Js/logIn.js"></script>
+<script>
+    function sale(){
 
+        if(<?php echo  $numFilas?> != 0){
+            window.location.href='pago.php';
+        }
+
+
+    }
+
+</script>
 </body>
+
+
 
 
 </html>

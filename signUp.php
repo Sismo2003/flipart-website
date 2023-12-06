@@ -12,22 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     $phone = $_POST['phone'];
     $birth_date = $_POST['birthdate'];
 
-    $new_user = array(
-        "username" => $username,
-        "fullname" => $name,
-        "pwd" => $pwd,
-        "email" => $email,
-        "phone" => $phone,
-        "birth_date" => $birth_date,
-        "acount_tipe" => "3",
-        "chips" => "1000"
-    );
 
-    $users = json_decode(file_get_contents('sources/db/users.json'), true);
-    $users[$username] = $new_user;
-
-    $users_json = json_encode($users, JSON_PRETTY_PRINT);
-    file_put_contents('sources/db/users.json', $users_json);
 
     header('Location: login.php');
     exit();
@@ -152,33 +137,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 </button>
             </div>
             <?php
+
             if($isLoggedIn){
                 $con = conecta();
                 $usuario = $_SESSION['username'];
                 $sql = "SELECT * FROM pedidos WHERE status = 1 AND client_id = '$usuario'";
                 $res = $con->query($sql);
+
                 $total = 0;
-                while($row = $res->fetch_array()) {
-                    $userOrderId = $row["id"];
-                    $productoQuery = "SELECT * FROM items_orders WHERE order_id = '$userOrderId'";
-                    $productoANS = $con->query($productoQuery);
-                    while($productrow = $productoANS->fetch_array()) {
-                        $invoiceNumber = $productrow['id'];
-                        $productID = $productrow['product_id'];
-                        $productAmount = $productrow['amount'];
-                        $productPrice = $productrow['price'];
-                        //Obten Detalles del Producto
-                        $tablaDeProductos = "SELECT * FROM Products WHERE id = '$productID' AND deleted = 0";
-                        $tablaDeProductosANS = $con->query($tablaDeProductos);
-                        while($tablaDeProductosROW = $tablaDeProductosANS->fetch_array()) {
-                            $itemName = $tablaDeProductosROW['product_name'];
-                            $itemCode = $tablaDeProductosROW['product_code'];
-                            $itemDescr = $tablaDeProductosROW['product_description'];
-                            $itemStock = $tablaDeProductosROW['product_stock'];
-                            $file = $tablaDeProductosROW["archivo"];
-                            $finalFile = substr($file, 3);
-                            $total += ($productPrice * $productAmount);
-                            echo '
+                $numFilas=$res->num_rows;
+                if ($numFilas=='0'){
+                    echo'
+                               <div class="modal-body">
+                <div class="media">
+                    <div class="media-body">
+                        <h5 class="mt-0">Acualmente no tienes productos en el carrito</h5>
+                        <div id="productDescription">Empieza a agregar productos aqui <strong>HOY MISMO</strong>!</div>
+                    </div>
+                </div>
+                <hr>
+            </div>
+                    ';
+                }else{
+
+
+                    while($row = $res->fetch_array()) {
+                        $userOrderId = $row["id"];
+                        $productoQuery = "SELECT * FROM items_orders WHERE order_id = '$userOrderId'";
+                        $productoANS = $con->query($productoQuery);
+                        while($productrow = $productoANS->fetch_array()) {
+                            $invoiceNumber = $productrow['id'];
+                            $productID = $productrow['product_id'];
+                            $productAmount = $productrow['amount'];
+                            $productPrice = $productrow['price'];
+                            //Obten Detalles del Producto
+                            $tablaDeProductos = "SELECT * FROM Products WHERE id = '$productID' AND deleted = 0";
+                            $tablaDeProductosANS = $con->query($tablaDeProductos);
+                            while($tablaDeProductosROW = $tablaDeProductosANS->fetch_array()) {
+                                $itemName = $tablaDeProductosROW['product_name'];
+                                $itemCode = $tablaDeProductosROW['product_code'];
+                                $itemDescr = $tablaDeProductosROW['product_description'];
+                                $itemStock = $tablaDeProductosROW['product_stock'];
+                                $file = $tablaDeProductosROW["archivo"];
+                                $finalFile = substr($file, 3);
+                                $total += ($productPrice * $productAmount);
+                                echo '
                 <div class="modal-body">
                     <div class="media">
                         <img src="';echo $finalFile; echo '" style="max-width: 64px;height: 64px;object-fit: cover;" class="mr-3" alt="Producto">
@@ -199,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     </div>
                     <hr>
                 </div>
-                ';}}}}
+                ';}}}} }
             else{
                 echo '
                 <div class="modal-body">
@@ -229,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary">Realizar Compra</button>
+                <button type="button" class="btn btn-primary" onclick="sale();return false">Realizar Compra</button>
             </div>
         </div>
     </div>
@@ -246,6 +249,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script src="Js/carrito.js"></script>
+<script src="Js/logIn.js"></script>
+<script>
+    function sale(){
+
+        if(<?php echo  $numFilas?> != 0){
+            window.location.href='pago.php';
+        }
+
+
+    }
+
+</script>
 </body>
 
 </html>

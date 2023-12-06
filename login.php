@@ -101,6 +101,9 @@ $isLoggedIn = isset($_SESSION['username']);
         </div>
     </div>
 </div>
+
+
+
 <div class="modal fade" id="cartModal" tabindex="-1" role="dialog" aria-labelledby="cartModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -196,19 +199,6 @@ $isLoggedIn = isset($_SESSION['username']);
 
 
 
-
-
-<footer class="bg-dark text-white text-center py-3">
-    <div class="container">
-        <p>&copy; 2023 FlipArt Todos los derechos reservados.</p>
-    </div>
-</footer>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script src="Js/carrito.js"></script>
-<script src="Js/logIn.js"></script>
 </body>
 
 </html>
