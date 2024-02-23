@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../../OMRCH/.idea/OMRCH.iml" filepath="$PROJECT_DIR$/../../../OMRCH/.idea/OMRCH.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/Sistema Usuario Final.iml" filepath="$PROJECT_DIR$/.idea/Sistema Usuario Final.iml" />
     </modules>
   </component>

@@ -331,7 +331,7 @@ if ($isLoggedIn && isset($_POST['logout'])) {
             }
         }
         function deleteThisproduct(order){
-            $.ajax({
+            $.ajax(ajax{
                 url:"deleteProductCar.php",
                 type:"POST",
                 data:'order='+order,
