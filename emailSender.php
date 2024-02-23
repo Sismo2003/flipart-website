@@ -9,7 +9,7 @@ $msj = $_REQUEST['userMsgContact'];
     use PHPMailer\PHPMailer\Exception;
 
     //Load Composer's autoloader
-    require 'vendor/autoload.php';
+    require 'vendor/autoload.php'; 
 
     $mail = new PHPMailer(true);
 
