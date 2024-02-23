@@ -18,11 +18,11 @@ $msj = $_REQUEST['userMsgContact'];
         $mail->isSMTP();                                            //Send using SMTP
         $mail->Host = 'smtp.gmail.com';                     //Set the SMTP server to send through
         $mail->SMTPAuth = true;                                   //Enable SMTP authentication
-        $mail->Username = 'alexis.ortiz6646@alumnos.udg.mx';                     //SMTP username
-        $mail->Password = 'loihtyvsfqebvlve';                               //SMTP password
+        $mail->Username = 'YOUREMAIL';                     //SMTP username
+        $mail->Password = 'THEPASSGGENERRADBYDEFAULT';                               //SMTP password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = 465;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
-        $mail->setFrom('alexis.ortiz6646@alumnos.udg.mx', 'FlipART');
+        $mail->setFrom('YOUREMAILS', 'FlipART');
         $mail->addAddress($email, $name);     //Add a recipient
 
         //Attachments
