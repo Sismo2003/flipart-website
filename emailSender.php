@@ -10,7 +10,7 @@ $msj = $_REQUEST['userMsgContact'];
 
     //Load Composer's autoloader
     require 'vendor/autoload.php'; 
-
+    //// necesito quitar eto alc
     $mail = new PHPMailer(true);
 
     try {
